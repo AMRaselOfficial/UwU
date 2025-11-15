@@ -2,9 +2,15 @@
 <html>
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>UwU Girls</title>
   <style>
     /* --- Page basics --- */
+    html, body {
+      touch-action: manipulation;
+      -ms-touch-action: manipulation;
+    }
+
     body{
       margin:0;
       min-height:100vh;
@@ -153,6 +159,31 @@
       z-index: -1;
     }
   </style>
+
+  <script>
+    (function() {
+      let lastTouchTime = 0;
+      const DBL_TAP_THRESHOLD = 250; // ms — adjust (250-350ms is typical)
+
+      // We listen on touchend so we still allow click handlers and don't interfere with scrolling as much.
+      // Use passive:false so we can call event.preventDefault().
+      document.addEventListener('touchend', function(e) {
+        const now = Date.now();
+        const delta = now - lastTouchTime;
+
+        if (delta > 0 && delta <= DBL_TAP_THRESHOLD) {
+          // second tap too quickly -> prevent default (which is what triggers double-tap zoom)
+          // We call preventDefault only on the second tap.
+          e.preventDefault();
+          // Optionally, you can synthesize a click if you rely on click handlers:
+          // const target = e.target;
+          // target.click && target.click();
+        }
+        lastTouchTime = now;
+      }, { passive: false, capture: true });
+    })();
+  </script>
+
   <script>
     /* -------------------------
        SOUND + SPECIAL TRIGGER
