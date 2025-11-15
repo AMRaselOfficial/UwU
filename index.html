@@ -1,16 +1,150 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8"/>
+  <meta charset="utf-8" />
   <title>UwU Girls</title>
+  <style>
+    /* --- Page basics --- */
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(180deg, #0f0726 0%, #1a1038 60%, #1b0f2a 100%);
+      font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color:#fff;
+      overflow:hidden;
+    }
+
+    /* --- Title styling (default rainbow glow + subtle pulse) --- */
+    #uwuTitle {
+      font-size:64px;
+      letter-spacing:2px;
+      margin:0;
+      padding:10px 20px;
+      border-radius:12px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      display:inline-block;
+      cursor:pointer;
+      user-select:none;
+      transition: transform 300ms cubic-bezier(.2,.9,.3,1);
+      text-align:center;
+      color: transparent;
+      background-clip: text;
+      -webkit-background-clip: text;
+      /* animated rainbow gradient for the text */
+      background-image: linear-gradient(90deg,
+        #ff6ec7 0%, #ffd86b 15%, #7efcff 30%, #9b8cff 50%, #ff9bd1 70%, #8aff9a 85%, #ff6ec7 100%);
+      background-size: 300% 100%;
+      animation: rainbowShift 6s linear infinite, titleBreathe 3.6s ease-in-out infinite;
+      text-shadow:
+        0 4px 18px rgba(170,80,200,0.25),
+        0 8px 40px rgba(120,40,160,0.12);
+    }
+
+    @keyframes rainbowShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    @keyframes titleBreathe {
+      0% { transform: scale(1); filter: drop-shadow(0 6px 18px rgba(100,30,160,0.18)); }
+      50% { transform: scale(1.03); filter: drop-shadow(0 12px 36px rgba(150,50,200,0.26)); }
+      100% { transform: scale(1); }
+    }
+
+    /* --- Special effect active state (intensifies glow + quick scale) --- */
+    #uwuTitle.special {
+      animation: none;
+      transform: scale(1.14) rotate(-1.5deg);
+      text-shadow:
+        0 8px 30px rgba(255,120,200,0.6),
+        0 18px 60px rgba(120,60,200,0.45);
+      filter: saturate(1.25) brightness(1.08);
+    }
+
+    /* --- Particle container (absolute over title) --- */
+    .effect-layer {
+      position: absolute;
+      pointer-events: none;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      width:100%;
+      height:100%;
+      overflow:visible;
+      z-index:50;
+    }
+
+    /* --- Each particle --- */
+    .particle {
+      position:absolute;
+      will-change: transform, opacity;
+      font-size:18px; /* emoji size */
+      opacity:0;
+      transform-origin:center;
+      animation: particleRise 1600ms cubic-bezier(.2,.9,.3,1) forwards;
+      text-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    }
+
+    @keyframes particleRise {
+      0% {
+        opacity:1;
+        transform: translateY(0) scale(0.9) rotate(0deg);
+        filter: blur(0px);
+      }
+      60% {
+        opacity:1;
+        transform: translateY(-60px) scale(1.05) rotate(15deg);
+      }
+      100% {
+        opacity:0;
+        transform: translateY(-120px) scale(0.8) rotate(30deg);
+        filter: blur(1.5px);
+      }
+    }
+
+    /* --- sparkle flash behind title --- */
+    .flash {
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:120px;
+      height:120px;
+      transform:translate(-50%,-50%) scale(0.1);
+      border-radius:50%;
+      opacity:0;
+      pointer-events:none;
+      mix-blend-mode: screen;
+      animation: flashPop 650ms cubic-bezier(.2,.9,.3,1) forwards;
+    }
+    @keyframes flashPop {
+      0% { opacity:0; transform:translate(-50%,-50%) scale(0.1) }
+      30% { opacity:0.9; transform:translate(-50%,-50%) scale(1.05) }
+      100% { opacity:0; transform:translate(-50%,-50%) scale(1.3) }
+    }
+
+    /* small responsive tweak */
+    @media (max-width:600px){
+      #uwuTitle { font-size:36px; }
+      .particle { font-size:14px; }
+    }
+
+  </style>
 </head>
 <body>
-  <center><h1>UwU Girls</h1></center>
+
+  <div style="position:relative; text-align:center; width:100%;">
+    <center><h1 id="uwuTitle">UwU Girls</h1></center>
+    <!-- effect layer sits over the page and is used to add particles/flashes -->
+    <div class="effect-layer" id="effectLayer" aria-hidden="true"></div>
+  </div>
 
   <div class="image">
     <script src="pic.js"></script>
   </div>
-
   <style>
     div.image {
       position: fixed;
@@ -19,74 +153,215 @@
       z-index: -1;
     }
   </style>
-
-  <!-- Random Special Sound Script -->
   <script>
-    // Base click sound (always plays)
-    const baseSoundFile = "sound/uwu.mp3";
+    /* -------------------------
+       SOUND + SPECIAL TRIGGER
+       ------------------------- */
 
-    // Your 12 special sounds from sound/ folder
+    // base click sound (plays every click)
+    const baseSound = "sound/uwu.mp3";
+
+    // special sounds array (adjust names exactly as in your folder)
     const specialFiles = [
-      "sound/animebabe.mp3",
-      "sound/antabaka.mp3",
-      "sound/ara.mp3",
-      "sound/ducktoy.mp3",
-      "sound/bakabaka.mp3",
-      "sound/ahh.mp3",
-      "sound/punch.mp3",
-      "sound/uhh.mp3",
-      "sound/mambo.mp3",
-      "sound/ohmygod.mp3",
-      "sound/onicha.mp3",
-      "sound/wow.mp3"
-    ];
+                            "sound/animebabe.mp3",
+                            "sound/antabaka.mp3",
+                            "sound/ara.mp3",
+                            "sound/ducktoy.mp3",
+                            "sound/bakabaka.mp3",
+                            "sound/ahh.mp3",
+                            "sound/computer.mp3",
+                            "sound/punch.mp3",
+                            "sound/uhh.mp3",
+                            "sound/mambo.mp3",
+                            "sound/ohmygod.mp3",
+                            "sound/onicha.mp3",
+                            "sound/wow.mp3"
+                          ];
+    
 
-    const specialChance = 0.08;        // 8% chance to trigger a special sound
-    const specialCooldownMs = 2000;    // cannot play special more than once every 2 seconds
+    // behavior tuning
+    const specialChance = 0.08;       // 8% random chance to trigger a special on any click
+    const specialCooldownMs = 2200;   // minimum gap between special plays
+    const fastClickWindowMs = 500;    // time window considered "fast" between clicks
+    const fastClickThreshold = 8;     // 8 or more fast clicks triggers special
 
-    // Helper to preload audio
-    function makeAudio(url) {
-      const a = new Audio(url);
-      a.preload = "auto";
-      return a;
-    }
+    // pre-create an Audio object for base sound for minimal latency
+    const baseAudio = new Audio(baseSound);
+    baseAudio.preload = "auto";
 
-    const baseAudio = makeAudio(baseSoundFile);
-
-    function playOneShot(url) {
+    // quick helper to play a one-shot (creates a new Audio so overlaps allowed)
+    function playOneShot(url){
       try {
         const a = new Audio(url);
         a.preload = "auto";
         a.currentTime = 0;
-        a.play().catch(() => {});
+        a.play().catch(()=>{ /* ignore play errors */ });
+        return a;
       } catch (e) {}
     }
 
+    // preload all sounds on load (does not auto-play)
+    window.addEventListener("load", () => {
+      baseAudio.load();
+      specialFiles.forEach(f => {
+        const t = new Audio(f);
+        t.preload = "auto";
+      });
+    });
+
+    // fast-click tracking
+    let lastClickTime = 0;
+    let fastClickCount = 0;
     let lastSpecialAt = 0;
 
-    document.addEventListener("click", () => {
-      // Play main uwu sound each click
+    // DOM references for effects
+    const title = document.getElementById("uwuTitle");
+    const layer = document.getElementById("effectLayer");
+
+    document.addEventListener("click", (ev) => {
+      // play base sound
       baseAudio.currentTime = 0;
-      baseAudio.play().catch(() => {});
+      baseAudio.play().catch(()=>{});
 
       const now = Date.now();
 
-      // Enforce cooldown for special sound
-      if (now - lastSpecialAt < specialCooldownMs) return;
+      // fast click logic
+      if (now - lastClickTime < fastClickWindowMs) {
+        fastClickCount++;
+      } else {
+        fastClickCount = 1;
+      }
+      lastClickTime = now;
 
-      // Random trigger
-      if (Math.random() < specialChance) {
-        const randomIndex = Math.floor(Math.random() * specialFiles.length);
-        playOneShot(specialFiles[randomIndex]);
+      // decide if special should trigger:
+      const inCooldown = (now - lastSpecialAt) < specialCooldownMs;
+      const fastClickTrigger = fastClickCount >= fastClickThreshold;
+      const randomTrigger = Math.random() < specialChance;
+
+      if (!inCooldown && (fastClickTrigger || randomTrigger)) {
+        // choose random special file
+        const idx = Math.floor(Math.random() * specialFiles.length);
+        const file = specialFiles[idx];
+
+        // play special
+        playOneShot(file);
         lastSpecialAt = now;
+
+        // show visuals
+        showSpecialEffect();
       }
     });
 
-    // Preload all sounds on load
-    window.addEventListener("load", () => {
-      makeAudio(baseSoundFile);
-      specialFiles.forEach(f => makeAudio(f));
+    /* -------------------------
+       VISUAL SPECIAL EFFECT
+       ------------------------- */
+
+    // particle choices (anime themed): sakura, sparkle, heart, star — using emoji for simplicity
+    const particlePool = ["🌸","✨","💖","⭐","🌺","🌟","🎐","❀"];
+
+    let effectRunning = false;
+
+    function showSpecialEffect(){
+      if(effectRunning) return; // avoid overlapping effect
+      effectRunning = true;
+
+      // add a flash behind the title
+      const flash = document.createElement("div");
+      flash.className = "flash";
+      layer.appendChild(flash);
+
+      // add 'special' class to the title to intensify glow & scale
+      title.classList.add("special");
+
+      // spawn multiple particles around the title
+      const rect = title.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2 + window.scrollX;
+      const centerY = rect.top + rect.height / 2 + window.scrollY;
+
+      const particleCount = 16 + Math.floor(Math.random()*8); // 16-23 particles
+
+      for(let i=0;i<particleCount;i++){
+        createParticle(centerX, centerY, i);
+      }
+
+      // effect duration (when to clear)
+      const totalDuration = 1800; // ms
+      setTimeout(()=> {
+        title.classList.remove("special");
+        // clear leftover particles after animation ends
+        setTimeout(()=> {
+          while(layer.firstChild) layer.removeChild(layer.firstChild);
+          effectRunning = false;
+        }, 700);
+      }, totalDuration);
+    }
+
+    function createParticle(cx, cy, i){
+      const p = document.createElement("div");
+      p.className = "particle";
+
+      // pick a random emoji
+      p.textContent = particlePool[Math.floor(Math.random()*particlePool.length)];
+
+      // absolute starting position near title center with small jitter
+      const startLeft = cx + (Math.random()*140 - 70);
+      const startTop  = cy + (Math.random()*40 - 30);
+
+      // size variation
+      const size = 14 + Math.random()*22; // 14-36px
+      p.style.fontSize = size + "px";
+
+      // position in viewport coordinates - convert to layer coordinates
+      // layer is centered in the page with translate(-50%,-50%) so we put in fixed coords via transform
+      // We'll place absolute relative to document by using transform on layer to offset 50%/50%
+      // Simpler: set position using viewport and then transform layer inverse to match visually.
+      p.style.left = (startLeft) + "px";
+      p.style.top  = (startTop) + "px";
+
+      // random horizontal drift and rotation
+      const dx = (Math.random()*160 - 80) * (Math.random()>0.5 ? 1 : -1);
+      const delay = Math.random()*150; // staggered start
+
+      // apply inline animation using setTimeout to stagger slightly
+      p.style.opacity = 0;
+      layer.appendChild(p);
+
+      // use translate for motion (so we avoid layout thrash)
+      setTimeout(()=> {
+        // random transform end state
+        const endX = (Math.random()*120 - 60) + (dx*0.6);
+        const endY = -120 - Math.random()*60 - Math.random()*40;
+        const rotate = (Math.random()*60 - 30);
+        p.style.transition = "transform 1400ms cubic-bezier(.2,.9,.3,1), opacity 1400ms linear";
+        p.style.opacity = 1;
+        p.style.transform = `translate(${endX}px, ${endY}px) rotate(${rotate}deg) scale(${0.9 + Math.random()*0.6})`;
+      }, delay);
+
+      // fade out and remove after duration
+      setTimeout(()=> {
+        p.style.opacity = 0;
+        setTimeout(()=> {
+          if(p && p.parentNode) p.parentNode.removeChild(p);
+        }, 500);
+      }, 1650 + Math.random()*300);
+    }
+
+    /* -------------------------
+       OPTIONAL: Title hover sound (subtle)
+       ------------------------- */
+    const titleHoverSfx = "sound/special1.mp3"; // pick any of your files if you want hover sound
+    let hoverAudio;
+    title.addEventListener("mouseenter", () => {
+      // play a very subtle sound on hover (optional)
+      try {
+        hoverAudio = new Audio(titleHoverSfx);
+        hoverAudio.preload = "auto";
+        hoverAudio.volume = 0.6;
+        hoverAudio.currentTime = 0;
+        hoverAudio.play().catch(()=>{});
+      } catch(e){}
     });
+
   </script>
 
 </body>
